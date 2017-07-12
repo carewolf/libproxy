@@ -83,8 +83,13 @@ static string prep_type_name(string name) {
 	return name;
 }
 #else
+#ifdef RTLD_DEEPBIND
+#define DLOPEN_FLAGS (RTLD_LAZY | RTLD_LOCAL | RTLD_DEEPBIND)
+#else
+#define DLOPEN_FLAGS (RTLD_LAZY | RTLD_LOCAL)
+#endif
 #define pdlmtype void*
-#define pdlopenl(filename) dlopen(filename, RTLD_LAZY | RTLD_LOCAL)
+#define pdlopenl(filename) dlopen(filename, DLOPEN_FLAGS)
 #define pdlclose(module) dlclose((pdlmtype) module)
 #define pdlreopen(filename, module) module
 static void* pdlsym(pdlmtype mod, string sym) {
@@ -96,7 +101,7 @@ static string pdlerror() {
 }
 
 bool pdlsymlinked(const char* modn, const char* symb) {
-	void* mod = dlopen(NULL, RTLD_LAZY | RTLD_LOCAL);
+	void* mod = dlopen(NULL, DLOPEN_FLAGS);
 	if (mod) {
 		void* sym = dlsym(mod, symb);
 		dlclose(mod);
